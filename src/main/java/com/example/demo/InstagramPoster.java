@@ -23,12 +23,18 @@ public class InstagramPoster {
         urlParameters.add(new BasicNameValuePair("caption", post.getBody()));
         ArrayList<File> images = post.getPhotos();
         for(int i = 0; i < images.size(); i++) {
-        urlParameters.add(new BasicNameValuePair("image", images.get(i)));
+        //urlParameters.add(new BasicNameValuePair("image", images.get(i)));
         }
-        HttpPost.setEntity(new UrlEncodedFormEntity(urlParameters));
+        
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpClient.execute(HttpPost)) {
-		return true;
+        try {
+        	HttpPost.setEntity(new UrlEncodedFormEntity(urlParameters));
+        	CloseableHttpClient httpClient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpClient.execute(HttpPost);
+             } catch (Exception e) {
+		return false;
+             }
+        return true;
 	}
 }
+
