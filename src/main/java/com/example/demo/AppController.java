@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
@@ -283,6 +284,7 @@ public class AppController {
     	}
     	return "";
     }
+    
     
     
 }

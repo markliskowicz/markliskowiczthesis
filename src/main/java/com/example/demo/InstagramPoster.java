@@ -17,13 +17,15 @@ import FBO.SMPost;
 public class InstagramPoster {
 
 	private HttpPost HttpPost = new HttpPost("https://httpbin.org/post");
-	
+	private CloudinaryUploader uploader = new CloudinaryUploader();
 	public boolean post(SMPost post) {
 		List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair("caption", post.getBody()));
         ArrayList<File> images = post.getPhotos();
+        String url = "";
         for(int i = 0; i < images.size(); i++) {
-        //urlParameters.add(new BasicNameValuePair("image", images.get(i)));
+        	url = uploader.upload(images.get(i));
+        	urlParameters.add(new BasicNameValuePair("image", url));
         }
         
 
