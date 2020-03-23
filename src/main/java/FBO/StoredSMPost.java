@@ -1,15 +1,14 @@
 package FBO;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import org.springframework.web.multipart.MultipartFile;
 
-public class SMPost {
+public class StoredSMPost {
 	private long owner;
 	private String body;
 	private String website;
-	private ArrayList<MultipartFile> photos;
+	private ArrayList<String> photos;
 	
 	private boolean postToTwitter;
 	private boolean postToFacebook;
@@ -33,10 +32,10 @@ public class SMPost {
 	public void setWebsite(String website) {
 		this.website = website;
 	}
-	public ArrayList<MultipartFile> getPhotos() {
+	public ArrayList<String> getPhotos() {
 		return photos;
 	}
-	public void setPhotos(ArrayList<MultipartFile> photos) {
+	public void setPhotos(ArrayList<String> photos) {
 		this.photos = photos;
 	}
 	public boolean isPostToTwitter() {
@@ -58,7 +57,7 @@ public class SMPost {
 		this.postToInstagram = postToInstagram;
 	}
 	
-	public void addFile(MultipartFile file) {
+	public void addFile(String file) {
 		photos.add(file);
 	}
 }

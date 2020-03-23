@@ -1,4 +1,5 @@
 <html xmlns:th="https://www.thymeleaf.org">
+<form action="#" th:action="@{/viewFiles}" enctype="multipart/form-data" method="post">
 <body>
 
 	<div th:if="${message}">
@@ -6,10 +7,10 @@
 	</div>
 
 	<div>
-		<form method="POST" enctype="multipart/form-data" action="/uploadFile">
+		
 			<table>
 				<tr><td>File to upload:</td><td><input type="file" name="file" /></td></tr>
-				<tr><td></td><td><input type="submit" value="Upload" /></td></tr>
+				<tr><td></td><td><input type="submit" value="submit" /></td></tr>
 			</table>
 		</form>
 	</div>

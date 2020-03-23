@@ -11,20 +11,34 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.springframework.web.multipart.MultipartFile;
 
 import FBO.SMPost;
+import FBO.StoredSMPost;
 
 public class InstagramPoster {
 
 	private HttpPost HttpPost = new HttpPost("https://httpbin.org/post");
-	private CloudinaryUploader uploader = new CloudinaryUploader();
+	private CloudinaryUploader uploader;
+	private static FileDao fileDao;
+	
+	private String accessToken;
+	
+	public InstagramPoster(FileDao fileDao) {
+		this.fileDao = fileDao;
+		uploader = new CloudinaryUploader(fileDao);
+	}
+	
+	public void setAccessToken(String token) {
+		accessToken = token;
+	}
 	public boolean post(SMPost post) {
 		List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair("caption", post.getBody()));
-        ArrayList<File> images = post.getPhotos();
+        ArrayList<MultipartFile> images = post.getPhotos();
         String url = "";
         for(int i = 0; i < images.size(); i++) {
-        	url = uploader.upload(images.get(i));
+        	url = uploader.saveFile(images.get(i), (int)post.getOwner(), fileDao);
         	urlParameters.add(new BasicNameValuePair("image", url));
         }
         
@@ -37,6 +51,10 @@ public class InstagramPoster {
 		return false;
              }
         return true;
+	}
+	public void restore(StoredSMPost post) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

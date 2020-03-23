@@ -2,6 +2,7 @@ package com.example.demo;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,11 +36,22 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import FBO.PostFBO;
 import FBO.SMPost;
+import FBO.StoredSMPost;
 
 
 
 @Controller
 public class AppController {
+	
+	public AppController() {
+		//fileDao = new FileDao();
+		//userDao = new UserDao();
+		//postDao = new SMPostDao();
+		twitterPoster = new TwitterPoster(fileDao);
+		facebookPoster = new FacebookPoster(fileDao);
+		instagramPoster = new InstagramPoster(fileDao);
+		twitterPin = new TwitterPin();
+	}
 
 	@Autowired
 	private AccountDao accountDao;
@@ -58,32 +70,42 @@ public class AppController {
 	@Autowired
 	private SMPostDao postDao;
 	
-	private String ownerName = authentication.getName();
-	private int owner = userDao.getID(ownerName);
+	private String ownerName ;//= authentication.getName();
+	private int owner = -1;//userDao.getID(ownerName);
 	
 	private SMPost currentPost;
 	
-	@Autowired
+	//@Autowired
 	private TwitterPoster twitterPoster;
 	
-	@Autowired 
+	//@Autowired 
 	private FacebookPoster facebookPoster;
 	
-	@Autowired
+	//@Autowired
 	private InstagramPoster instagramPoster;
 	
-	@Autowired 
+	//@Autowired 
 	private TwitterPin twitterPin;
 
 	@GetMapping(value = "/")
-	public String postHomeFromRoot() {
+	public String postHomeFromRoot(Principal principal) {
+		getUserIdOnStart(principal);
 		System.out.println("got to postHome()");
 		return "home";
 	}
 
+	private void getUserIdOnStart(Principal principal) {
+		if(principal != null && owner == -1) {
+			ownerName = principal.getName();
+			System.out.println(ownerName);
+			owner = userDao.getID(ownerName);
+		}
+	}
+	
 	@GetMapping(value = "/home")
-	public String postHome() {
+	public String postHome(Principal principal) {
 		//System.out.println("got to postHome()");
+		getUserIdOnStart(principal);
 		return "home";
 	}
 	
@@ -95,7 +117,7 @@ public class AppController {
 			return "posts";
 		} else {
 			//find the product with the matching id
-			SMPost post = postDao.getPostbyID(Integer.parseInt(id));
+			StoredSMPost post = postDao.getPostbyID(Integer.parseInt(id));
 			if(post == null) {
 				//if nothing is found, return everything
 				List<String> postIDList = postDao.getPostIDs(owner);
@@ -157,8 +179,8 @@ public class AppController {
 		 * path.getFileName().toString()).build().toString())
 		 * .collect(Collectors.toList()));
 		 */
-    	FileDao fileDao = new FileDao();
-    	ArrayList<String> listOfFiles = fileDao.getFileNames(1);
+    	//FileDao fileDao = new FileDao();
+    	ArrayList<String> listOfFiles = fileDao.getFileNames(owner);
     	model.addAttribute("files", listOfFiles);
         return "UploadFile";
        
@@ -177,9 +199,10 @@ public class AppController {
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
             RedirectAttributes redirectAttributes) {
     	System.out.println("got to handleFileUpload()");
-    	FileDao fileDao = new FileDao();
-    	storageService.store(file);
-    	fileDao.uploadFile(file, 1);  
+    	//FileDao fileDao = new FileDao();
+    	//storageService.store(file);
+    	CloudinaryUploader uploader = new CloudinaryUploader(fileDao);
+    	uploader.saveFile(file, owner, fileDao); 
         redirectAttributes.addFlashAttribute("message",
                 "You successfully uploaded " + file.getOriginalFilename() + "!");
 
@@ -202,44 +225,41 @@ public class AppController {
     	List<MultipartFile> files = post.getPhotos();
         List<String> fileNames = new ArrayList<String>();
         SMPost smpost = new SMPost();
+        CloudinaryUploader uploader = new CloudinaryUploader(fileDao);
         if (null != files && files.size() > 0) 
         {
-            for (MultipartFile multipartFile : files) {
+            for (int i = 0; i < files.size(); i++) {
  
-                String fileName = multipartFile.getOriginalFilename();
-                fileNames.add(fileName);
- 
-                File imageFile = new File(servletRequest.getServletContext().getRealPath("/image"), fileName);
-                fileDao.uploadFile(multipartFile, owner);
-                smpost.addFile(imageFile);
-                try
-                {
-                    multipartFile.transferTo(imageFile);
-                } catch (IOException e) 
-                {
-                    e.printStackTrace();
-                }
+                //File imageFile = new File(servletRequest.getServletContext().getRealPath("/image"), fileName);
+                uploader.saveFile(files.get(i), owner, fileDao);
+                smpost.addFile(files.get(i));
+//                try
+//                {
+//                    multipartFile.transferTo(imageFile);
+//                } catch (IOException e) 
+//                {
+//                    e.printStackTrace();
+//                }
             }
         }
         model.addAttribute("post", post);
         smpost.setBody(post.getBody());
         smpost.setOwner(owner);
     	if(post.isPostToTwitter()) {
-    		twitterPoster = new TwitterPoster();
-    		twitterPin = new TwitterPin();
-    		twitterPin.setURL(twitterPoster.getAuthenticationURL());
-    		return "twitterPin";
+    		//twitterPoster = new TwitterPoster();
+    		
+    		twitterPoster.post(smpost);
     	}
     	if(post.isPostToInstagram()) {
-    		InstagramPoster instagramPoster = new InstagramPoster();
+    		//InstagramPoster instagramPoster = new InstagramPoster();
     		instagramPostResult = instagramPoster.post(smpost);
     	}
     	if(post.isPostToFacebook()) {
-    		FacebookPoster facebookPoster = new FacebookPoster();
+    		//FacebookPoster facebookPoster = new FacebookPoster();
     		facebookPostResult = facebookPoster.post(smpost);
     	}
     	if(instagramPostResult && facebookPostResult && twitterPostResult) {
-    		SMPostDao postDao = new SMPostDao();
+    		//SMPostDao postDao = new SMPostDao();
     		postDao.addPost(smpost);
     		
     	}
@@ -253,12 +273,12 @@ public class AppController {
 		return "createPost";
 	}
     
-    @GetMapping(value = "/twitterPin")
-	public String showTwitterPinPage(TwitterPin twitterPin, Model model) throws IOException {
-    	
-		model.addAttribute("pin", twitterPin);
-		return "twitterPin";
-	}
+//    @GetMapping(value = "/twitterPin")
+//	public String showTwitterPinPage(TwitterPin twitterPin, Model model) throws IOException {
+//    	
+//		model.addAttribute("pin", twitterPin);
+//		return "twitterPin";
+//	}
     
     @PostMapping(value = "/twitterPin")
 	public String getTwitterPinPage(@Valid @ModelAttribute("pin") TwitterPin twitterPin, BindingResult result, Model model) {
@@ -269,21 +289,41 @@ public class AppController {
     
     @PostMapping(value ="/restoreAll")
     public String restoreAllPosts(Model model) {
-    	ArrayList<SMPost> posts = postDao.getAll(owner);
+    	ArrayList<StoredSMPost> posts = postDao.getAll(owner);
     	for(int i = 0; i < posts.size(); i++) {
-    		SMPost post = posts.get(i);
+    		StoredSMPost post = posts.get(i);
     		if(post.isPostToFacebook()) {
-    			facebookPoster.post(post);
+    			facebookPoster.restore(post);
     		} 
     		if(post.isPostToInstagram()) {
-    			instagramPoster.post(post);
+    			instagramPoster.restore(post);
     		}
     		if(post.isPostToTwitter()) {
-    			twitterPoster.post(post);
+    			twitterPoster.restore(post);
     		}
     	}
-    	return "";
+    	return "home";
     }
+     
+    @GetMapping(value = "/twitterLogin")
+	public String showTwitterLoginPage(TwitterPin twitterPin, Model model) throws IOException {
+    	twitterPin = new TwitterPin();
+		twitterPin.setURL(twitterPoster.getAuthenticationURL()); 
+		model.addAttribute("twitterPin", twitterPin);
+		return "twitterPin";
+	}
+    
+    @GetMapping(value = "/token")
+	public String getIGAccessToken(@RequestParam(name = "access_token", required=false, defaultValue="0") String token, Model model) {
+    	if(token.equals("0")) {
+    		return "home";
+    	} 
+    	instagramPoster.setAccessToken(token);
+    	return "confirmation";
+    }
+    
+    
+    
     
     
     

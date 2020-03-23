@@ -1,11 +1,13 @@
 package com.example.demo;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.springframework.web.multipart.MultipartFile;
 
 import FBO.SMPost;
+import FBO.StoredSMPost;
 import twitter4j.Status;
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
@@ -25,9 +27,13 @@ public class TwitterPoster {
     
     private RequestToken requestToken;
     private AccessToken accessToken;
+    private CloudinaryUploader uploader;
+	private static FileDao fileDao;
 	
-	public TwitterPoster() {
+	public TwitterPoster(FileDao fileDao) {
 		twitter = new TwitterFactory().getInstance();
+		this.fileDao = fileDao;
+		uploader = new CloudinaryUploader(fileDao);
 	}
 	
 	public String getAuthenticationURL() {
@@ -36,7 +42,6 @@ public class TwitterPoster {
 		try {
 			requestToken = twitter.getOAuthRequestToken();
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return requestToken.getAuthorizationURL();
@@ -46,17 +51,23 @@ public class TwitterPoster {
 		try {
 			accessToken = twitter.getOAuthAccessToken(requestToken, pin);
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	public boolean post(SMPost post) {
-		ArrayList<File> images = post.getPhotos();
+		ArrayList<MultipartFile> images = post.getPhotos();
 		long[] mediaIds = new long[images.size()];
 		for(int i = 0; i < images.size(); i++) {
+			uploader.saveFile(images.get(i), (int)post.getOwner(), fileDao);
 			try {
-				UploadedMedia media = twitter.uploadMedia(images.get(i));
+				File convFile = new File(System.getProperty("java.io.tmpdir")+"/"+images.get(i).getOriginalFilename());
+				try {
+				images.get(i).transferTo(convFile);
+				} catch (IOException io) {
+					return false;
+				}
+				UploadedMedia media = twitter.uploadMedia(convFile);
 				mediaIds[i] = media.getMediaId();
 			} catch (TwitterException e) {
 				e.printStackTrace();
@@ -72,5 +83,20 @@ public class TwitterPoster {
 			return false;
 		}
 		return true;
+	}
+
+	public void restore(StoredSMPost post) {
+		String body = post.getBody();
+		ArrayList<String> urls = post.getPhotos();
+		for(int i = 0; i < urls.size(); i++) {
+			body = body + " " + urls.get(i);
+		}
+		StatusUpdate update = new StatusUpdate(body);
+		try {
+			Status status = twitter.updateStatus(update);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
