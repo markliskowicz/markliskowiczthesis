@@ -10,6 +10,7 @@ public class SMPost {
 	private String body;
 	private String website;
 	private ArrayList<MultipartFile> photos;
+	private String storedPhotoURL; 
 	
 	private boolean postToTwitter;
 	private boolean postToFacebook;
@@ -60,5 +61,12 @@ public class SMPost {
 	
 	public void addFile(MultipartFile file) {
 		photos.add(file);
+	}
+	
+	public String getStoredPhotoURL() {
+		return storedPhotoURL;
+	}
+	public void setStoredPhotoURL(String storedPhotoURL) {
+		this.storedPhotoURL = storedPhotoURL;
 	}
 }

@@ -10,7 +10,7 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity">
 </tr>
 </thead>
 <tr th:each="post : ${post}">
-        <td <a <a th:href="@{/posts(id=${post.id})}"> th:text ${post.body }</a>1</td>
+        <td> <a th:href="@{/posts(id=${post.id})}"> th:text ${post.body }</a></td>
     </tr>
     </table>
 

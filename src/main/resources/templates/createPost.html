@@ -13,28 +13,28 @@
                 
                 <p>
                     <label for="body">Body: </label>
-                    <form:input id="description" path="description" />
+                    <form:input type="text" path="description" />
                 </p>
                 <p>
                     <label for="image">Images: </label> 
                     <input type="file" name="images" multiple="multiple"/>
                 </p>
                 <p>
-                    <label for="isPostToTwitter">Images: </label> 
+                    <label for="isPostToTwitter">To Twitter: </label> 
                     <input type="checkbox" name="isPostToTwitter"/>
                 </p>
                 <p>
-                    <label for="isPostToFacebook">Images: </label> 
+                    <label for="isPostToFacebook">To Facebook: </label> 
                     <input type="checkbox" name="isPostToFacebook"/>
                 </p>
                 <p>
-                    <label for="isPostToInstagram">Images: </label> 
+                    <label for="isPostToInstagram">To Instagram: </label> 
                     <input type="checkbox" name="isPostToInstagram"/>
                 </p>
                 
                 <p id="buttons">
                     <input id="reset" type="reset" tabindex="4"> 
-                    <input id="submit" type="submit" tabindex="5" value="Add Product">
+                    <input id="submit" type="submit" tabindex="5" value="Post">
                 </p>
             </fieldset>
         </form:form>

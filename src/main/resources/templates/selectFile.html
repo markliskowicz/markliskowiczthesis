@@ -1,0 +1,13 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<thead>
+<tr>
+	<th>Select a file to attach</th>
+</tr>
+</thead>
+<a href="/createPost"> click here to attach no file</a>
+<tr th:each="file : ${file}">
+        <td> <a th:href="@{/posts(url${file})}"> th:text ${file }</a></td>
+    </tr>
+    </table>
+
+</html>

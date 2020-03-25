@@ -47,10 +47,10 @@ public class AppController {
 		//fileDao = new FileDao();
 		//userDao = new UserDao();
 		//postDao = new SMPostDao();
-		twitterPoster = new TwitterPoster(fileDao);
+		
 		facebookPoster = new FacebookPoster(fileDao);
 		instagramPoster = new InstagramPoster(fileDao);
-		twitterPin = new TwitterPin();
+		//twitterPin = new TwitterPin();
 	}
 
 	@Autowired
@@ -73,7 +73,7 @@ public class AppController {
 	private String ownerName ;//= authentication.getName();
 	private int owner = -1;//userDao.getID(ownerName);
 	
-	private SMPost currentPost;
+	private StoredSMPost currentPost;
 	
 	//@Autowired
 	private TwitterPoster twitterPoster;
@@ -118,6 +118,7 @@ public class AppController {
 		} else {
 			//find the product with the matching id
 			StoredSMPost post = postDao.getPostbyID(Integer.parseInt(id));
+			currentPost = post;
 			if(post == null) {
 				//if nothing is found, return everything
 				List<String> postIDList = postDao.getPostIDs(owner);
@@ -126,11 +127,35 @@ public class AppController {
 			}
 			//return the product
 			model.addAttribute("post", post);
-			return "savedPost";
+			return "redirect:/savedPost";
 		}		
-		//return "posts";
 	}
-
+	
+	@GetMapping(value = "/savedPost")
+	public String showSavedPost(StoredSMPost post, Model model) throws IOException {
+		model.addAttribute("post", currentPost);
+		return "savedPost";
+	}
+	
+	@PostMapping(value = "/savedPost")
+	public String restoreSavedPost(@Valid @ModelAttribute("post")StoredSMPost smpost, BindingResult result, Model model) throws IOException {
+		String sites = smpost.getWebsite();
+		if(sites.charAt(0) == '1') {
+    		//twitterPoster = new TwitterPoster();
+    		
+    		twitterPoster.restore(smpost);
+    	}
+    	if(sites.charAt(1) == '1') {
+    		//InstagramPoster instagramPoster = new InstagramPoster();
+    		instagramPoster.restore(smpost);
+    	}
+    	if(sites.charAt(2) == '1') {
+    		//FacebookPoster facebookPoster = new FacebookPoster();
+    		facebookPoster.restore(smpost);
+    	}
+		return "savedPost";
+	}
+	
 	@GetMapping(value = "/createAccount")
 	public String showCreateAccount(Account account, Model model) throws IOException {
 		//System.out.println("AAAAAAAAAAAAAAAAAAAAAAAgot to showCreateAccount()");
@@ -186,14 +211,14 @@ public class AppController {
        
     }
 
-    @GetMapping("/files/{filename:.+}")
-    @ResponseBody
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-
-        Resource file = storageService.loadAsResource(filename);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + file.getFilename() + "\"").body(file);
-    }
+//    @GetMapping("/files/{filename:.+}")
+//    @ResponseBody
+//    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+//
+//        Resource file = storageService.loadAsResource(filename);
+//        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
+//                "attachment; filename=\"" + file.getFilename() + "\"").body(file);
+//    }
 
     @PostMapping("/viewFiles")
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
@@ -225,6 +250,7 @@ public class AppController {
     	List<MultipartFile> files = post.getPhotos();
         List<String> fileNames = new ArrayList<String>();
         SMPost smpost = new SMPost();
+        smpost.setStoredPhotoURL(url);
         CloudinaryUploader uploader = new CloudinaryUploader(fileDao);
         if (null != files && files.size() > 0) 
         {
@@ -245,18 +271,27 @@ public class AppController {
         model.addAttribute("post", post);
         smpost.setBody(post.getBody());
         smpost.setOwner(owner);
+        String website = "";
     	if(post.isPostToTwitter()) {
     		//twitterPoster = new TwitterPoster();
-    		
+    		website = website + "1";
     		twitterPoster.post(smpost);
+    	} else {
+    		website = website + "0";
     	}
     	if(post.isPostToInstagram()) {
     		//InstagramPoster instagramPoster = new InstagramPoster();
+    		website = website + "1";
     		instagramPostResult = instagramPoster.post(smpost);
+    	} else {
+    		website = website + "0";
     	}
     	if(post.isPostToFacebook()) {
     		//FacebookPoster facebookPoster = new FacebookPoster();
+    		website = website + "1";
     		facebookPostResult = facebookPoster.post(smpost);
+    	} else {
+    		website = website + "0";
     	}
     	if(instagramPostResult && facebookPostResult && twitterPostResult) {
     		//SMPostDao postDao = new SMPostDao();
@@ -267,9 +302,12 @@ public class AppController {
     	return "createPost";
     }
     
+    String url = "";
+    
     @GetMapping(value = "/createPost")
-	public String showPostUpload(SMPost post, Model model) throws IOException {
+	public String showPostUpload(@RequestParam(name = "url", required=false, defaultValue="") String url, SMPost post, Model model) throws IOException {
 		model.addAttribute("post", new SMPost());
+		this.url = url;
 		return "createPost";
 	}
     
@@ -307,6 +345,7 @@ public class AppController {
      
     @GetMapping(value = "/twitterLogin")
 	public String showTwitterLoginPage(TwitterPin twitterPin, Model model) throws IOException {
+    	twitterPoster = new TwitterPoster(fileDao);
     	twitterPin = new TwitterPin();
 		twitterPin.setURL(twitterPoster.getAuthenticationURL()); 
 		model.addAttribute("twitterPin", twitterPin);
@@ -319,10 +358,25 @@ public class AppController {
     		return "home";
     	} 
     	instagramPoster.setAccessToken(token);
+    	System.out.println(token);
     	return "confirmation";
     }
     
-    
+    @GetMapping("/selectFile")
+    public String selectUploadedFiles(Model model) throws IOException {
+    	
+		/*
+		 * model.addAttribute("files", storageService.loadAll().map( path ->
+		 * MvcUriComponentsBuilder.fromMethodName(AppController.class, "serveFile",
+		 * path.getFileName().toString()).build().toString())
+		 * .collect(Collectors.toList()));
+		 */
+    	//FileDao fileDao = new FileDao();
+    	ArrayList<String> listOfFiles = fileDao.getFileNames(owner);
+    	model.addAttribute("files", listOfFiles);
+        return "selectFile";
+       
+    }
     
     
     
