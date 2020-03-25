@@ -18,9 +18,9 @@ import FBO.StoredSMPost;
 
 public class FacebookPoster {
 	
-	static String appID;
-	static String secretID;
-
+	static private String appID;
+	static private String secretID;
+	private String accessToken;
 	private HttpPost HttpPost = new HttpPost("https://httpbin.org/post");
 	private CloudinaryUploader uploader;
 	private static FileDao fileDao;
@@ -33,15 +33,10 @@ public class FacebookPoster {
 	public boolean post(SMPost post) {
 		List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair("caption", post.getBody()));
-        ArrayList<MultipartFile> images = post.getPhotos();
-        String url = "";
-        for(int i = 0; i < images.size(); i++) {
-        	url = uploader.saveFile(images.get(i), (int)post.getOwner(), fileDao);
+        
+        String url = post.getStoredPhotoURL();
         	urlParameters.add(new BasicNameValuePair("image", url));
         	urlParameters.add(new BasicNameValuePair("body", post.getBody()));
-        }
-        
-
         try {
         	HttpPost.setEntity(new UrlEncodedFormEntity(urlParameters));
         	CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -52,8 +47,25 @@ public class FacebookPoster {
         return true;
 	}
 
-	public void restore(StoredSMPost post) {
-		// TODO Auto-generated method stub
+	public boolean restore(StoredSMPost post) {
+		List<NameValuePair> urlParameters = new ArrayList<>();
+        urlParameters.add(new BasicNameValuePair("caption", post.getBody()));
+        
+        String url = post.getImage();
+        	urlParameters.add(new BasicNameValuePair("image", url));
+        	urlParameters.add(new BasicNameValuePair("body", post.getBody()));
+        try {
+        	HttpPost.setEntity(new UrlEncodedFormEntity(urlParameters));
+        	CloseableHttpClient httpClient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpClient.execute(HttpPost);
+             } catch (Exception e) {
+		return false;
+             }
+        return true;
+	}
+
+	public void setAccessToken(String token) {
+		accessToken = token;
 		
 	}
 }

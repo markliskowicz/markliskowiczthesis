@@ -19,6 +19,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.multipart.MultipartFile;
 
+import FBO.FilenameURLPair;
 import FBO.UploadedFile;
 
 @Repository
@@ -67,16 +68,27 @@ public class FileDaoImp implements FileDao{
 	}
 	
 	@Override
-	public ArrayList<String> getFileNames(int owner){
+	public ArrayList<FilenameURLPair> getFileNamesAndURLs(int owner){
 		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		TransactionStatus status = transactionManager.getTransaction(def);
-		String strSQL = "SELECT filename FROM uploadedfile WHERE owner = ?";
+		String strSQL = "SELECT filename, url FROM uploadedfile WHERE owner = ?";
 		SqlRowSet rs = jdbcTemplate.queryForRowSet(strSQL, new Object[] {owner});
-		ArrayList<String> names = new ArrayList<String>();
+		ArrayList<FilenameURLPair> names = new ArrayList<FilenameURLPair>();
 		while(rs.next()) {
-			names.add(rs.getString(1));
+			names.add(new FilenameURLPair(rs.getString("filename"), rs.getString("url")));
 		}
 		return names;
+	}
+
+	@Override
+	public int getImageIDFromURL(String storedPhotoURL) {
+		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		TransactionStatus status = transactionManager.getTransaction(def);
+		String strSQL = "SELECT id FROM uploadedfile WHERE url = ?";
+		SqlRowSet rs = jdbcTemplate.queryForRowSet(strSQL, new Object[] {storedPhotoURL});
+		rs.next();
+		return rs.getInt("id");
 	}
 }

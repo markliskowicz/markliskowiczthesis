@@ -35,12 +35,9 @@ public class InstagramPoster {
 	public boolean post(SMPost post) {
 		List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair("caption", post.getBody()));
-        ArrayList<MultipartFile> images = post.getPhotos();
-        String url = "";
-        for(int i = 0; i < images.size(); i++) {
-        	url = uploader.saveFile(images.get(i), (int)post.getOwner(), fileDao);
+       
+        String url = post.getStoredPhotoURL();
         	urlParameters.add(new BasicNameValuePair("image", url));
-        }
         
 
         try {

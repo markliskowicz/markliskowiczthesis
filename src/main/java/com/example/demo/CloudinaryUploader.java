@@ -16,9 +16,9 @@ public class CloudinaryUploader {
 	public CloudinaryUploader(FileDao dao) {
 		if(cloudinary == null) {
 			cloudinary = new Cloudinary(ObjectUtils.asMap(
-					  "dau5nr3mn", "dau5nr3mn",
-					  "873748161588662", "873748161588662",
-					  "_5TSC47tD758F_rZ5rwt0031pqo", "_5TSC47tD758F_rZ5rwt0031pqo"));
+					"cloud_name", "dau5nr3mn",
+					  "api_key", "873748161588662",
+					  "api_secret", "_5TSC47tD758F_rZ5rwt0031pqo"));
 		}
 		if(fileDao == null) {
 			fileDao = dao;
@@ -28,7 +28,14 @@ public class CloudinaryUploader {
 	public String saveFile(MultipartFile file, int owner, FileDao fileDao) {
 		Map uploadResult;
 		try {
-		uploadResult = cloudinary.uploader().upload(file, ObjectUtils.emptyMap());
+			File convFile = new File(System.getProperty("java.io.tmpdir")+"/"+file.getOriginalFilename());
+			try {
+			file.transferTo(convFile);
+			} catch (IOException io) {
+				io.printStackTrace();
+				return null;
+			}
+		uploadResult = cloudinary.uploader().upload(convFile, ObjectUtils.emptyMap());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -38,4 +45,4 @@ public class CloudinaryUploader {
 		return url;
 	}
 		
-	}
+}

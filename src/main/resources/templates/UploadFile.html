@@ -1,7 +1,7 @@
 <html xmlns:th="https://www.thymeleaf.org">
 <form action="#" th:action="@{/viewFiles}" enctype="multipart/form-data" method="post">
 <body>
-
+	<a href="/home">Back to homepage</a>
 	<div th:if="${message}">
 		<h2 th:text="${message}"/>
 	</div>
@@ -18,7 +18,7 @@
 	<div>
 		<ul>
 			<li th:each="file : ${files}">
-				<a th:href="${file}" th:text="${file}" />
+				<a th:href="${file.URL}" th:text="${file.fileName}" />
 			</li>
 		</ul>
 	</div>

@@ -8,12 +8,19 @@ public class StoredSMPost {
 	private long owner;
 	private String body;
 	private String website;
-	private ArrayList<String> photos;
+	private String image;
 	
-	private boolean postToTwitter;
-	private boolean postToFacebook;
-	private boolean postToInstagram;
+
+	private boolean postToTwitter = false;
+	private boolean postToFacebook = false;
+	private boolean postToInstagram= false;
 	
+	public String getImage() {
+		return image;
+	}
+	public void setImage(String image) {
+		this.image = image;
+	}
 	public long getOwner() {
 		return owner;
 	}
@@ -32,11 +39,11 @@ public class StoredSMPost {
 	public void setWebsite(String website) {
 		this.website = website;
 	}
-	public ArrayList<String> getPhotos() {
-		return photos;
+	public String getPhotos() {
+		return image;
 	}
-	public void setPhotos(ArrayList<String> photos) {
-		this.photos = photos;
+	public void setPhotos(String photos) {
+		this.image = photos;
 	}
 	public boolean isPostToTwitter() {
 		return postToTwitter;
@@ -55,9 +62,5 @@ public class StoredSMPost {
 	}
 	public void setPostToInstagram(boolean postToInstagram) {
 		this.postToInstagram = postToInstagram;
-	}
-	
-	public void addFile(String file) {
-		photos.add(file);
 	}
 }

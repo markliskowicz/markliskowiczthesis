@@ -19,6 +19,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import FBO.IDBodyPair;
 import FBO.SMPost;
 import FBO.StoredSMPost;
 
@@ -37,20 +38,21 @@ public class SMPostDaoImp implements SMPostDao {
 	}
 
 	@Override
-	public void addPost(SMPost post) {
+	public void addPost(SMPost post, FileDao fileDao) {
 		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		TransactionStatus status = transactionManager.getTransaction(def);
 		
+		int imageID = fileDao.getImageIDFromURL(post.getStoredPhotoURL());
 		try {
-			String strSQL = "INSERT INTO SMPost (owner, body, website) VALUES (?, ?, ?)";
-			jdbcTemplate.update(strSQL, post.getOwner(), post.getBody(), post.getWebsite());
+			String strSQL = "INSERT INTO SMPost (owner, body, website, image) VALUES (?, ?, ?, ?)";
+			jdbcTemplate.update(strSQL, post.getOwner(), post.getBody(), post.getWebsite(), imageID);
 			transactionManager.commit(status);
 			
 		} catch (DataAccessException e) {
 			System.out.println("Error in creating account record, rolling back");
 			transactionManager.rollback(status);
-			throw e;
+			e.printStackTrace();
 		}
 	}
 	
@@ -59,49 +61,53 @@ public class SMPostDaoImp implements SMPostDao {
 		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		TransactionStatus status = transactionManager.getTransaction(def);
-		String strSQL = "Select * FROM SMPOST INNER JOIN filefrompost ON postID = id (INNER JOIN file ON file.id = fileID) where SMPOST.id = ?";
+		String strSQL = "Select * FROM SMPOST INNER JOIN uploadedfile ON smpost.image = uploadedfile.id where SMPOST.id = ?";
 		ArrayList<SMPost> posts = new ArrayList<SMPost>();
 		SqlRowSet rs = jdbcTemplate.queryForRowSet(strSQL, id);
 		int postID = -1;
 		String body = "";
-		//File image;
-		ArrayList<String> images = new ArrayList<String>();
+		String url = "";
+		String website = "";
 		while(rs.next()) {
-			if(postID != rs.getInt("SMPOST.id")) {
-			postID = rs.getInt("SMPOST.id");
+			//postID = rs.getInt("SMPOST.id");
 			body = rs.getString("body");
-			} 
-			String imageUrl = rs.getString("hosturl");
-			images.add(imageUrl);
-//			File contents = new File(rs.getString("fileName") + "." + rs.getString("fileType"));
-//			try {
-//			contents.createNewFile();
-//			OutputStream  os = new FileOutputStream(contents); 
-//			os.write(EncryptionUtil.decrypt(rs.getString("contents").getBytes())); 
-//			os.close();
-//			} catch (IOException i) {
-//				return null;
-//			}
-//			images.add(contents);
+			url = rs.getString("url");
+			website = rs.getString("website");
 		}
+		System.out.println(website + " url: " + url);
 		StoredSMPost post = new StoredSMPost();
-		post.setPhotos(images);
+		if(!website.equals("") && website != null) {
+		if(website.charAt(0) == '1') {
+			post.setPostToTwitter(true);
+		}
+		if(website.charAt(1)== '1') {
+			post.setPostToInstagram(true);
+		}
+		if(website.charAt(2) == '1') {
+			post.setPostToFacebook(true);
+		}
+		}
+		post.setWebsite(website);
+		post.setPhotos(url);
 		post.setBody(body);
 		return post;
 	}
 	
 	@Override
-	public ArrayList<String> getPostIDs(int owner){
+	public ArrayList<IDBodyPair> getPostIDs(int owner){
 		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		TransactionStatus status = transactionManager.getTransaction(def);
-		String strSQL = "Select ID from SMPost where owner = ?";
+		String strSQL = "Select ID, body from SMPost where owner = ?";
 		SqlRowSet rs = jdbcTemplate.queryForRowSet(strSQL, owner);
-		ArrayList<String> IDs = new ArrayList<String>();
+		ArrayList<IDBodyPair> pairs = new ArrayList<IDBodyPair>();
 		while(rs.next()) {
-			IDs.add("" + rs.getInt("ID"));
+			IDBodyPair pair = new IDBodyPair();
+			pair.setID("" + rs.getInt("ID"));
+			pair.setBody(rs.getString("body"));
+			pairs.add(pair);
 		}
-		return IDs;
+		return pairs;
 	}
 	
 	@Override
@@ -109,35 +115,31 @@ public class SMPostDaoImp implements SMPostDao {
 		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		TransactionStatus status = transactionManager.getTransaction(def);
-		String strSQL = "Select * FROM SMPOST INNER JOIN filefrompost ON postID = id (INNER JOIN file ON file.id = fileID) where SMPOST.owner = ?";
+		String strSQL = "Select * FROM SMPOST INNER JOIN uploadedfile ON smpost.image = uploadedfile.id where SMPOST.owner = ?";
 		ArrayList<StoredSMPost> posts = new ArrayList<StoredSMPost>();
 		SqlRowSet rs = jdbcTemplate.queryForRowSet(strSQL, owner);
-		int postID = -1;
+		int postID = 0;
 		String body = "";
-		//File image;
-		ArrayList<String> images = new ArrayList<String>();
+		String images = "";
+		String website = "";
 		while(rs.next()) {
-		while(rs.next() && postID != rs.getInt("SMPOST.id")) {
-			if(postID != rs.getInt("SMPOST.id")) {
 			postID = rs.getInt("SMPOST.id");
 			body = rs.getString("body");
-			} 
-			String imageurl = rs.getString("hosturl");
-//			File contents = new File(rs.getString("fileName") + "." + rs.getString("fileType"));
-//			try {
-//			contents.createNewFile();
-//			OutputStream  os = new FileOutputStream(contents); 
-//			os.write(EncryptionUtil.decrypt(rs.getString("contents").getBytes())); 
-//			os.close();
-//			} catch (IOException i) {
-//				return null;
-//			}
-			images.add(imageurl);
-		}
-		StoredSMPost post = new StoredSMPost();
-		post.setPhotos(images);
-		post.setBody(body);
-		posts.add(post);
+			images = rs.getString("hosturl");
+			website = rs.getString("website");
+			StoredSMPost post = new StoredSMPost();
+			if(website.charAt(0) == '1') {
+				post.setPostToTwitter(true);
+			}
+			if(website.charAt(1)== '1') {
+				post.setPostToInstagram(true);
+			}
+			if(website.charAt(2) == '1') {
+				post.setPostToFacebook(true);
+			}
+			post.setPhotos(images);
+			post.setBody(body);
+			posts.add(post);
 		}
 		return posts;
 	}

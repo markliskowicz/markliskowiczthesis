@@ -3,15 +3,16 @@ xmlns:th="http://www.thymeleaf.org"
 xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity">
 
 <body>
+<a href="/home">Back to homepage</a>
 <table style="width:100%">
 <thead>
 <tr>
-	<th>ID</th>
+	<th>Past Posts</th>
 </tr>
 </thead>
-<tr th:each="post : ${post}">
-        <td> <a th:href="@{/posts(id=${post.id})}"> th:text ${post.body }</a></td>
+<tr th:each="posts : ${posts}">
+        <td> <a th:href="@{/savedPosts(id=${posts.ID})}" th:text=${posts.body}/></td>
     </tr>
     </table>
-
+</body>
 </html>

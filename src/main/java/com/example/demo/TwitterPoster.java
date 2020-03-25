@@ -56,41 +56,23 @@ public class TwitterPoster {
 	}
 	
 	public boolean post(SMPost post) {
-		ArrayList<MultipartFile> images = post.getPhotos();
-		long[] mediaIds = new long[images.size()];
-		for(int i = 0; i < images.size(); i++) {
-			uploader.saveFile(images.get(i), (int)post.getOwner(), fileDao);
-			try {
-				File convFile = new File(System.getProperty("java.io.tmpdir")+"/"+images.get(i).getOriginalFilename());
-				try {
-				images.get(i).transferTo(convFile);
-				} catch (IOException io) {
-					return false;
-				}
-				UploadedMedia media = twitter.uploadMedia(convFile);
-				mediaIds[i] = media.getMediaId();
-			} catch (TwitterException e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-		StatusUpdate update = new StatusUpdate(post.getBody());
-        update.setMediaIds(mediaIds);
-        try {
+		String body = post.getBody();
+		String url = post.getStoredPhotoURL();
+			body = body + " " + url;
+		StatusUpdate update = new StatusUpdate(body);
+		try {
 			Status status = twitter.updateStatus(update);
 		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return false;
 		}
 		return true;
 	}
 
 	public void restore(StoredSMPost post) {
 		String body = post.getBody();
-		ArrayList<String> urls = post.getPhotos();
-		for(int i = 0; i < urls.size(); i++) {
-			body = body + " " + urls.get(i);
-		}
+		String url = post.getPhotos();
+			body = body + " " + url;
 		StatusUpdate update = new StatusUpdate(body);
 		try {
 			Status status = twitter.updateStatus(update);

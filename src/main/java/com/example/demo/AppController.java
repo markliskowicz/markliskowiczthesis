@@ -34,6 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import FBO.FilenameURLPair;
+import FBO.IDBodyPair;
 import FBO.PostFBO;
 import FBO.SMPost;
 import FBO.StoredSMPost;
@@ -48,8 +50,7 @@ public class AppController {
 		//userDao = new UserDao();
 		//postDao = new SMPostDao();
 		
-		facebookPoster = new FacebookPoster(fileDao);
-		instagramPoster = new InstagramPoster(fileDao);
+		//facebookPoster = new FacebookPoster(fileDao);
 		//twitterPin = new TwitterPin();
 	}
 
@@ -109,25 +110,23 @@ public class AppController {
 		return "home";
 	}
 	
-	@GetMapping(value = "/posts")
+	@GetMapping(value = "/savedPosts")
 	public String handleSearch(@RequestParam(name = "id", required=false, defaultValue="0") String id, Model model) {
 		if(id.equals("0")) {
-			List<String> postIDList = postDao.getPostIDs(owner);
-			model.addAttribute("posts", postIDList);
+			ArrayList<IDBodyPair> pairs = postDao.getPostIDs(owner);
+			model.addAttribute("posts", pairs);
 			return "posts";
 		} else {
 			//find the product with the matching id
 			StoredSMPost post = postDao.getPostbyID(Integer.parseInt(id));
 			currentPost = post;
 			if(post == null) {
-				//if nothing is found, return everything
-				List<String> postIDList = postDao.getPostIDs(owner);
-				model.addAttribute("posts", postIDList);
+				ArrayList<IDBodyPair> pairs = postDao.getPostIDs(owner);
+				model.addAttribute("posts", pairs);
 				return "posts";
 			}
-			//return the product
 			model.addAttribute("post", post);
-			return "redirect:/savedPost";
+			return "savedPost";
 		}		
 	}
 	
@@ -137,23 +136,23 @@ public class AppController {
 		return "savedPost";
 	}
 	
-	@PostMapping(value = "/savedPost")
-	public String restoreSavedPost(@Valid @ModelAttribute("post")StoredSMPost smpost, BindingResult result, Model model) throws IOException {
-		String sites = smpost.getWebsite();
+	@GetMapping(value = "/restore")
+	public String restoreSavedPost(Model model) throws IOException {
+		String sites = currentPost.getWebsite();
 		if(sites.charAt(0) == '1') {
     		//twitterPoster = new TwitterPoster();
     		
-    		twitterPoster.restore(smpost);
+    		twitterPoster.restore(currentPost);
     	}
     	if(sites.charAt(1) == '1') {
     		//InstagramPoster instagramPoster = new InstagramPoster();
-    		instagramPoster.restore(smpost);
+    		instagramPoster.restore(currentPost);
     	}
     	if(sites.charAt(2) == '1') {
     		//FacebookPoster facebookPoster = new FacebookPoster();
-    		facebookPoster.restore(smpost);
+    		facebookPoster.restore(currentPost);
     	}
-		return "savedPost";
+		return "confirmation";
 	}
 	
 	@GetMapping(value = "/createAccount")
@@ -205,20 +204,11 @@ public class AppController {
 		 * .collect(Collectors.toList()));
 		 */
     	//FileDao fileDao = new FileDao();
-    	ArrayList<String> listOfFiles = fileDao.getFileNames(owner);
+    	ArrayList<FilenameURLPair> listOfFiles = fileDao.getFileNamesAndURLs(owner);
     	model.addAttribute("files", listOfFiles);
         return "UploadFile";
        
     }
-
-//    @GetMapping("/files/{filename:.+}")
-//    @ResponseBody
-//    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-//
-//        Resource file = storageService.loadAsResource(filename);
-//        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-//                "attachment; filename=\"" + file.getFilename() + "\"").body(file);
-//    }
 
     @PostMapping("/viewFiles")
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
@@ -247,27 +237,9 @@ public class AppController {
     	boolean instagramPostResult = true;
     	boolean facebookPostResult = true;
     	boolean twitterPostResult = true;
-    	List<MultipartFile> files = post.getPhotos();
-        List<String> fileNames = new ArrayList<String>();
         SMPost smpost = new SMPost();
         smpost.setStoredPhotoURL(url);
         CloudinaryUploader uploader = new CloudinaryUploader(fileDao);
-        if (null != files && files.size() > 0) 
-        {
-            for (int i = 0; i < files.size(); i++) {
- 
-                //File imageFile = new File(servletRequest.getServletContext().getRealPath("/image"), fileName);
-                uploader.saveFile(files.get(i), owner, fileDao);
-                smpost.addFile(files.get(i));
-//                try
-//                {
-//                    multipartFile.transferTo(imageFile);
-//                } catch (IOException e) 
-//                {
-//                    e.printStackTrace();
-//                }
-            }
-        }
         model.addAttribute("post", post);
         smpost.setBody(post.getBody());
         smpost.setOwner(owner);
@@ -275,29 +247,35 @@ public class AppController {
     	if(post.isPostToTwitter()) {
     		//twitterPoster = new TwitterPoster();
     		website = website + "1";
-    		twitterPoster.post(smpost);
+    		if(twitterPoster != null) {
+    			twitterPoster.post(smpost);
+    		}
     	} else {
     		website = website + "0";
     	}
     	if(post.isPostToInstagram()) {
     		//InstagramPoster instagramPoster = new InstagramPoster();
     		website = website + "1";
-    		instagramPostResult = instagramPoster.post(smpost);
+    		if(instagramPoster != null) {
+    			instagramPostResult = instagramPoster.post(smpost);
+    		}
     	} else {
     		website = website + "0";
     	}
     	if(post.isPostToFacebook()) {
     		//FacebookPoster facebookPoster = new FacebookPoster();
     		website = website + "1";
-    		facebookPostResult = facebookPoster.post(smpost);
+    		if(facebookPoster != null) {
+    			facebookPostResult = facebookPoster.post(smpost);
+    		}
     	} else {
     		website = website + "0";
     	}
-    	if(instagramPostResult && facebookPostResult && twitterPostResult) {
-    		//SMPostDao postDao = new SMPostDao();
-    		postDao.addPost(smpost);
+    	//if(instagramPostResult && facebookPostResult && twitterPostResult) {
+    		smpost.setWebsite(website);
+    		postDao.addPost(smpost, fileDao);
     		
-    	}
+    	//}
     	
     	return "createPost";
     }
@@ -307,40 +285,34 @@ public class AppController {
     @GetMapping(value = "/createPost")
 	public String showPostUpload(@RequestParam(name = "url", required=false, defaultValue="") String url, SMPost post, Model model) throws IOException {
 		model.addAttribute("post", new SMPost());
+		model.addAttribute("url", url);
 		this.url = url;
 		return "createPost";
 	}
     
-//    @GetMapping(value = "/twitterPin")
-//	public String showTwitterPinPage(TwitterPin twitterPin, Model model) throws IOException {
-//    	
-//		model.addAttribute("pin", twitterPin);
-//		return "twitterPin";
-//	}
-    
-    @PostMapping(value = "/twitterPin")
+    @PostMapping(value = "/twitterLogin")
 	public String getTwitterPinPage(@Valid @ModelAttribute("pin") TwitterPin twitterPin, BindingResult result, Model model) {
 		this.twitterPin = twitterPin;
     	twitterPoster.getAccessTokenFromPIN(twitterPin.getPin());
 		return "createPost";
 	}
     
-    @PostMapping(value ="/restoreAll")
+    @GetMapping(value ="/restoreAll")
     public String restoreAllPosts(Model model) {
     	ArrayList<StoredSMPost> posts = postDao.getAll(owner);
     	for(int i = 0; i < posts.size(); i++) {
     		StoredSMPost post = posts.get(i);
-    		if(post.isPostToFacebook()) {
+    		if(post.isPostToFacebook() && facebookPoster != null) {
     			facebookPoster.restore(post);
     		} 
-    		if(post.isPostToInstagram()) {
+    		if(post.isPostToInstagram() && instagramPoster != null) {
     			instagramPoster.restore(post);
     		}
-    		if(post.isPostToTwitter()) {
+    		if(post.isPostToTwitter() && twitterPoster != null) {
     			twitterPoster.restore(post);
     		}
     	}
-    	return "home";
+    	return "confirmation";
     }
      
     @GetMapping(value = "/twitterLogin")
@@ -352,28 +324,32 @@ public class AppController {
 		return "twitterPin";
 	}
     
-    @GetMapping(value = "/token")
+    @GetMapping(value = "/IGtoken")
 	public String getIGAccessToken(@RequestParam(name = "access_token", required=false, defaultValue="0") String token, Model model) {
     	if(token.equals("0")) {
     		return "home";
     	} 
+    	instagramPoster = new InstagramPoster(fileDao);
     	instagramPoster.setAccessToken(token);
+    	System.out.println(token);
+    	return "confirmation";
+    }
+    
+    @GetMapping(value = "/FBtoken")
+	public String getFBAccessToken(@RequestParam(name = "access_token", required=false, defaultValue="0") String token, Model model) {
+    	if(token.equals("0")) {
+    		return "home";
+    	} 
+    	facebookPoster = new FacebookPoster(fileDao);
+    	facebookPoster.setAccessToken(token);
     	System.out.println(token);
     	return "confirmation";
     }
     
     @GetMapping("/selectFile")
     public String selectUploadedFiles(Model model) throws IOException {
-    	
-		/*
-		 * model.addAttribute("files", storageService.loadAll().map( path ->
-		 * MvcUriComponentsBuilder.fromMethodName(AppController.class, "serveFile",
-		 * path.getFileName().toString()).build().toString())
-		 * .collect(Collectors.toList()));
-		 */
-    	//FileDao fileDao = new FileDao();
-    	ArrayList<String> listOfFiles = fileDao.getFileNames(owner);
-    	model.addAttribute("files", listOfFiles);
+    	ArrayList<FilenameURLPair> listOfFiles = fileDao.getFileNamesAndURLs(owner);
+    	model.addAttribute("file", listOfFiles);
         return "selectFile";
        
     }

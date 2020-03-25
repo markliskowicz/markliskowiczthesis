@@ -1,43 +1,37 @@
-<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
 <title>Create Post</title>
 </head>
 <body>
-    <div id="global">
-        <form:form commandName="createPost" action="createPost" method="post" enctype="multipart/form-data" target="_blank">
+<a href="/home">Back to homepage</a>
+    <p> Selected file url th:text="${url}" </p>
+        <form action="#" th:action="@{/createPost}" th:object="${post}" method="post" enctype="multipart/form-data" target="_blank">
             <fieldset>
                 <legend>Create Post</legend>
                 
                 <p>
                     <label for="body">Body: </label>
-                    <form:input type="text" path="description" />
-                </p>
-                <p>
-                    <label for="image">Images: </label> 
-                    <input type="file" name="images" multiple="multiple"/>
+                    <input type="text" th:field="*{body}"/>
                 </p>
                 <p>
                     <label for="isPostToTwitter">To Twitter: </label> 
-                    <input type="checkbox" name="isPostToTwitter"/>
+                    <input type="checkbox" th:field="*{postToTwitter}"/>
                 </p>
                 <p>
                     <label for="isPostToFacebook">To Facebook: </label> 
-                    <input type="checkbox" name="isPostToFacebook"/>
+                    <input type="checkbox" th:field="*{postToFacebook}"/>
                 </p>
                 <p>
                     <label for="isPostToInstagram">To Instagram: </label> 
-                    <input type="checkbox" name="isPostToInstagram"/>
+                    <input type="checkbox" th:field="*{postToInstagram}"/>
                 </p>
                 
                 <p id="buttons">
-                    <input id="reset" type="reset" tabindex="4"> 
-                    <input id="submit" type="submit" tabindex="5" value="Post">
+                    <input id="reset" type="reset"> 
+                    <input id="submit" type="submit" value="post">
                 </p>
             </fieldset>
-        </form:form>
-    </div>
+        </form>
 </body>
 </html>

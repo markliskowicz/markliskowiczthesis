@@ -1,0 +1,20 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<img th:src="@{${post.image}}" th:alt = "image" height="200" width="200">
+<ul style="list-style-type:none;" th:each="post : ${post}">
+		<label>Body </label> 
+        <li th:text="${post.body}"><li>
+        <label>Posted to Twitter: </label> 
+        <li th:text="${post.postToTwitter}"> </li>
+        <label>Posted to Facebook </label> 
+        <li th:text="${post.postToFacebook}"> </li>
+        <label>posted to Instagram </label> 
+        <li th:text="${post.postToInstagram}"></li>
+     	
+        </ul>
+
+    <p><a href="/restore"> restore this post</a></p>
+    
+    <p><a href="home"> Go To Home Page</a></p>
+    </body>

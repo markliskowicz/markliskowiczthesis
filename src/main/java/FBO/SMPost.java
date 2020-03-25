@@ -9,7 +9,6 @@ public class SMPost {
 	private long owner;
 	private String body;
 	private String website;
-	private ArrayList<MultipartFile> photos;
 	private String storedPhotoURL; 
 	
 	private boolean postToTwitter;
@@ -34,12 +33,6 @@ public class SMPost {
 	public void setWebsite(String website) {
 		this.website = website;
 	}
-	public ArrayList<MultipartFile> getPhotos() {
-		return photos;
-	}
-	public void setPhotos(ArrayList<MultipartFile> photos) {
-		this.photos = photos;
-	}
 	public boolean isPostToTwitter() {
 		return postToTwitter;
 	}
@@ -57,10 +50,6 @@ public class SMPost {
 	}
 	public void setPostToInstagram(boolean postToInstagram) {
 		this.postToInstagram = postToInstagram;
-	}
-	
-	public void addFile(MultipartFile file) {
-		photos.add(file);
 	}
 	
 	public String getStoredPhotoURL() {
