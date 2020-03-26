@@ -123,9 +123,8 @@ public class SMPostDaoImp implements SMPostDao {
 		String images = "";
 		String website = "";
 		while(rs.next()) {
-			postID = rs.getInt("SMPOST.id");
 			body = rs.getString("body");
-			images = rs.getString("hosturl");
+			images = rs.getString("url");
 			website = rs.getString("website");
 			StoredSMPost post = new StoredSMPost();
 			if(website.charAt(0) == '1') {

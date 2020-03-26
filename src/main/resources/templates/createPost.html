@@ -5,14 +5,14 @@
 </head>
 <body>
 <a href="/home">Back to homepage</a>
-    <p> Selected file url th:text="${url}" </p>
-        <form action="#" th:action="@{/createPost}" th:object="${post}" method="post" enctype="multipart/form-data" target="_blank">
+<p>Selected file URL: <a th:href="${url}" th:text="${url}" target="_blank"></a></p>
+        <form action="#" th:action="@{/createPost}" th:object="${post}" method="post" id="myform">
             <fieldset>
                 <legend>Create Post</legend>
                 
                 <p>
-                    <label for="body">Body: </label>
-                    <input type="text" th:field="*{body}"/>
+                    Body: 
+                    <textarea name="body" rows="5" cols="50" th:field="*{body}" form="myform"></textarea>
                 </p>
                 <p>
                     <label for="isPostToTwitter">To Twitter: </label> 
@@ -29,7 +29,7 @@
                 
                 <p id="buttons">
                     <input id="reset" type="reset"> 
-                    <input id="submit" type="submit" value="post">
+                    <input type="submit" value="Submit">
                 </p>
             </fieldset>
         </form>

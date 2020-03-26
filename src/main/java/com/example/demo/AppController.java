@@ -40,19 +40,8 @@ import FBO.PostFBO;
 import FBO.SMPost;
 import FBO.StoredSMPost;
 
-
-
 @Controller
 public class AppController {
-	
-	public AppController() {
-		//fileDao = new FileDao();
-		//userDao = new UserDao();
-		//postDao = new SMPostDao();
-		
-		//facebookPoster = new FacebookPoster(fileDao);
-		//twitterPin = new TwitterPin();
-	}
 
 	@Autowired
 	private AccountDao accountDao;
@@ -71,8 +60,8 @@ public class AppController {
 	@Autowired
 	private SMPostDao postDao;
 	
-	private String ownerName ;//= authentication.getName();
-	private int owner = -1;//userDao.getID(ownerName);
+	private String ownerName ;
+	private int owner = -1;
 	
 	private StoredSMPost currentPost;
 	
@@ -87,6 +76,8 @@ public class AppController {
 	
 	//@Autowired 
 	private TwitterPin twitterPin;
+	
+	Principal principal;
 
 	@GetMapping(value = "/")
 	public String postHomeFromRoot(Principal principal) {
@@ -97,6 +88,7 @@ public class AppController {
 
 	private void getUserIdOnStart(Principal principal) {
 		if(principal != null && owner == -1) {
+			this.principal = principal;
 			ownerName = principal.getName();
 			System.out.println(ownerName);
 			owner = userDao.getID(ownerName);
@@ -139,17 +131,13 @@ public class AppController {
 	@GetMapping(value = "/restore")
 	public String restoreSavedPost(Model model) throws IOException {
 		String sites = currentPost.getWebsite();
-		if(sites.charAt(0) == '1') {
-    		//twitterPoster = new TwitterPoster();
-    		
+		if(sites.charAt(0) == '1' && twitterPoster != null) {
     		twitterPoster.restore(currentPost);
     	}
-    	if(sites.charAt(1) == '1') {
-    		//InstagramPoster instagramPoster = new InstagramPoster();
+    	if(sites.charAt(1) == '1' && instagramPoster != null) {
     		instagramPoster.restore(currentPost);
     	}
-    	if(sites.charAt(2) == '1') {
-    		//FacebookPoster facebookPoster = new FacebookPoster();
+    	if(sites.charAt(2) == '1' && facebookPoster != null) {
     		facebookPoster.restore(currentPost);
     	}
 		return "confirmation";
@@ -157,7 +145,6 @@ public class AppController {
 	
 	@GetMapping(value = "/createAccount")
 	public String showCreateAccount(Account account, Model model) throws IOException {
-		//System.out.println("AAAAAAAAAAAAAAAAAAAAAAAgot to showCreateAccount()");
 		model.addAttribute("account", new Account());
 		return "createAccount";
 	}
@@ -188,34 +175,17 @@ public class AppController {
 	public String showLogoutForm() {
 		return "logout";
 	}
-	
-	/*
-	 * @Autowired public AppController(StorageService storageService) {
-	 * this.storageService = storageService; }
-	 */
 
     @GetMapping("/viewFiles")
     public String listUploadedFiles(Model model) throws IOException {
-    	System.out.println("got to listUploadedFiles()");
-		/*
-		 * model.addAttribute("files", storageService.loadAll().map( path ->
-		 * MvcUriComponentsBuilder.fromMethodName(AppController.class, "serveFile",
-		 * path.getFileName().toString()).build().toString())
-		 * .collect(Collectors.toList()));
-		 */
-    	//FileDao fileDao = new FileDao();
     	ArrayList<FilenameURLPair> listOfFiles = fileDao.getFileNamesAndURLs(owner);
     	model.addAttribute("files", listOfFiles);
-        return "UploadFile";
-       
+        return "UploadFile";      
     }
 
     @PostMapping("/viewFiles")
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
             RedirectAttributes redirectAttributes) {
-    	System.out.println("got to handleFileUpload()");
-    	//FileDao fileDao = new FileDao();
-    	//storageService.store(file);
     	CloudinaryUploader uploader = new CloudinaryUploader(fileDao);
     	uploader.saveFile(file, owner, fileDao); 
         redirectAttributes.addFlashAttribute("message",
@@ -223,17 +193,9 @@ public class AppController {
 
         return "redirect:/viewFiles";
     }
-
-    @ExceptionHandler(StorageFileNotFoundException.class)
-    public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
-        return ResponseEntity.notFound().build();
-    }
     
     @PostMapping("/createPost")
-    public String handlePostUpload(HttpServletRequest servletRequest, 
-            @ModelAttribute PostFBO post,
-            Model model)  {
-    	// need seperate post fbo
+    public String handlePostUpload(HttpServletRequest servletRequest, @ModelAttribute PostFBO post, Model model)  {    
     	boolean instagramPostResult = true;
     	boolean facebookPostResult = true;
     	boolean twitterPostResult = true;
@@ -245,7 +207,6 @@ public class AppController {
         smpost.setOwner(owner);
         String website = "";
     	if(post.isPostToTwitter()) {
-    		//twitterPoster = new TwitterPoster();
     		website = website + "1";
     		if(twitterPoster != null) {
     			twitterPoster.post(smpost);
@@ -254,7 +215,6 @@ public class AppController {
     		website = website + "0";
     	}
     	if(post.isPostToInstagram()) {
-    		//InstagramPoster instagramPoster = new InstagramPoster();
     		website = website + "1";
     		if(instagramPoster != null) {
     			instagramPostResult = instagramPoster.post(smpost);
@@ -263,7 +223,6 @@ public class AppController {
     		website = website + "0";
     	}
     	if(post.isPostToFacebook()) {
-    		//FacebookPoster facebookPoster = new FacebookPoster();
     		website = website + "1";
     		if(facebookPoster != null) {
     			facebookPostResult = facebookPoster.post(smpost);
@@ -271,13 +230,13 @@ public class AppController {
     	} else {
     		website = website + "0";
     	}
-    	//if(instagramPostResult && facebookPostResult && twitterPostResult) {
+    	if(instagramPostResult && facebookPostResult && twitterPostResult) {
     		smpost.setWebsite(website);
     		postDao.addPost(smpost, fileDao);
     		
-    	//}
+    	}
     	
-    	return "createPost";
+    	return "confirmation";
     }
     
     String url = "";
@@ -287,13 +246,6 @@ public class AppController {
 		model.addAttribute("post", new SMPost());
 		model.addAttribute("url", url);
 		this.url = url;
-		return "createPost";
-	}
-    
-    @PostMapping(value = "/twitterLogin")
-	public String getTwitterPinPage(@Valid @ModelAttribute("pin") TwitterPin twitterPin, BindingResult result, Model model) {
-		this.twitterPin = twitterPin;
-    	twitterPoster.getAccessTokenFromPIN(twitterPin.getPin());
 		return "createPost";
 	}
     
@@ -319,9 +271,17 @@ public class AppController {
 	public String showTwitterLoginPage(TwitterPin twitterPin, Model model) throws IOException {
     	twitterPoster = new TwitterPoster(fileDao);
     	twitterPin = new TwitterPin();
-		twitterPin.setURL(twitterPoster.getAuthenticationURL()); 
+		//twitterPin.setURL(twitterPoster.getAuthenticationURL()); 
 		model.addAttribute("twitterPin", twitterPin);
 		return "twitterPin";
+	}
+    
+    @PostMapping(value = "/twitterLogin")
+	public String getTwitterPinPage(@Valid @ModelAttribute("pin") TwitterPin twitterPin, BindingResult result, Model model) {
+		this.twitterPin = twitterPin;
+		System.out.println(twitterPin.getPin());
+    	//twitterPoster.getAccessTokenFromPIN(twitterPin.getPin());
+		return "home";
 	}
     
     @GetMapping(value = "/IGtoken")

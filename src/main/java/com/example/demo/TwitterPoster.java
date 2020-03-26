@@ -44,6 +44,9 @@ public class TwitterPoster {
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		}
+		if(requestToken == null) {
+			return "";
+		}
 		return requestToken.getAuthorizationURL();
 	}
 	

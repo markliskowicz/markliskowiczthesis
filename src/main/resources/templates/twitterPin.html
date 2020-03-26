@@ -1,2 +1,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
-<form action="#" th:action="@{/twitterPin}" th:object="${twitterPin}" method="post">
+<h3>Twitter Sign In</h3>
+
+<form action="#" th:action="@{/twitterLogin}" th:object="${twitterPin}" method="post">
+<p>Click this link and enter the pin that is given after sign in
+<a th:href="${URL}" target="_blank">Click here to login with Twitter</a></p>
+	<p>
+    	<label for="pin">Sign in pin: </label> 
+        <input type="text" th:field="*{pin}"/>
+	</p>
+	<input type="submit" value="Submit">
+</form>
+</html>

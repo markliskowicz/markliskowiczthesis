@@ -3,13 +3,16 @@
 
 <img th:src="@{${post.image}}" th:alt = "image" height="200" width="200">
 <ul style="list-style-type:none;" th:each="post : ${post}">
-		<label>Body </label> 
-        <li th:text="${post.body}"><li>
+		<label>Body: </label> 
+        <li th:text="${post.body}"></li>
+        <br>
         <label>Posted to Twitter: </label> 
         <li th:text="${post.postToTwitter}"> </li>
-        <label>Posted to Facebook </label> 
+        <br>
+        <label>Posted to Facebook: </label> 
         <li th:text="${post.postToFacebook}"> </li>
-        <label>posted to Instagram </label> 
+        <br>
+        <label>posted to Instagram: </label> 
         <li th:text="${post.postToInstagram}"></li>
      	
         </ul>
