@@ -1,31 +1,101 @@
+
 <html xmlns:th="http://www.thymeleaf.org">
+<style>
+.sidebar {
+  margin: 0;
+  padding: 0;
+  width: 200px;
+  background-color: #FFFFFF;
+  position: fixed;
+  height: 100%;
+  overflow: auto;
+}
+
+/* Sidebar links */
+.sidebar a {
+  display: block;
+  color: black;
+  padding: 16px;
+  text-decoration: none;
+}
+
+/* Active/current link */
+.sidebar a.active {
+  background-color: #483FFF;
+  color: white;
+}
+
+/* Links on mouse-over */
+.sidebar a:hover:not(.active) {
+  background-color: #81A6F3;
+  color: white;
+}
+
+/* Page content. The value of the margin-left property should match the value of the sidebar's width property */
+div.content {
+  margin-left: 200px;
+  padding: 1px 16px;
+  height: 1000px;
+}
+
+/* On screens that are less than 700px wide, make the sidebar into a topbar */
+@media screen and (max-width: 700px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  .sidebar a {float: left;}
+  div.content {margin-left: 0;}
+}
+
+/* On screens that are less than 400px, display the bar vertically, instead of horizontally */
+@media screen and (max-width: 400px) {
+  .sidebar a {
+    text-align: center;
+    float: none;
+  }
+}
+</style>
+<title>Keepsake Home</title>
 <body>
+<div class="sidebar">
+  <a class="active" href="/home">Home</a>
+  <a href="/viewFiles">Upload and View files</a>
+  <a href = "/selectFile">Create a post</a>
+  <a href = "/savedPosts">View previous posts</a>
+  <a href="/createAccount">Create an Account</a>
+</div>
+<div class="content">
 <div id="fb-root"></div>
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v6.0&appId=2275238089397970&autoLogAppEvents=1"></script></body>
 <h1>Keepsake Home Page</h1>
 <a href="/login">login</a>
 <br>
+<div th:if="${welcomeMessage}">
+		<h2 th:text="${welcomeMessage}"/>
+</div>
+<div th:if="${twitterMessage}">
+		<h2 th:text="${twitterMessage}"/>
+	</div>
+	<div th:if="${facebookMessage}">
+		<h2 th:text="${facebookMessage}"/>
+	</div>
+	<div th:if="${instagramMessage}">
+		<h2 th:text="${instagramMessage}"/>
+	</div>
 <p>Be sure you have logged in with the platforms you plan to post to </p>
 <a href = "https://api.instagram.com/oauth/authorize/?client_id=998318050524537&redirect_uri=http://localhost:8080&response_type=token"> Sign in with Instagram</a>
 <br>
-<a href = "/twitterLogin">Sign in with twitter</a>
+<a href = "/twitterLogin">Sign in with Twitter</a>
 <br>
 <br>
 <div class="fb-login-button" data-width="100" data-size="large" data-button-type="login_with" data-layout="rounded" data-auto-logout-link="false" data-use-continue-as="true"></div>
 <br>
 <br>
-
-<br>
-<a href="/viewFiles">Upload and View saved files</a>
-<br>
-<a href = "/selectFile">Create a post</a>
-<br>
-<a href = "/savedPosts">View previous posts</a>
-<br>
 <a href = "/restoreAll">Click here to restore all previous posts</a>
 <br>
-<a href="/createAccount">Create an Account</a>
 <br>
 <a href="/logout">Logout</a>
-
+</div>
 </html>

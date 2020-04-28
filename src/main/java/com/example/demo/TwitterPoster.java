@@ -22,8 +22,8 @@ public class TwitterPoster {
 		
 	private Twitter twitter;
 	
-	private final String CONSUMER_KEY = "";
-    private final String CONSUMER_KEY_SECRET = ""; 
+	private final String CONSUMER_KEY = "CKV1t9z57bi559XQgdSGKemqC";
+    private final String CONSUMER_KEY_SECRET = "nSVtX6UTqow8FiwYCmMli1oef32aYl8HAEuiWohavWK8v8b2BV"; 
     
     private RequestToken requestToken;
     private AccessToken accessToken;
@@ -58,6 +58,11 @@ public class TwitterPoster {
 		}
 	}
 	
+	public void setAccessToken(String token, String secret) {
+		accessToken = new AccessToken(token, secret);
+		twitter.setOAuthAccessToken(accessToken);
+	}
+	
 	public boolean post(SMPost post) {
 		String body = post.getBody();
 		String url = post.getStoredPhotoURL();
@@ -68,6 +73,7 @@ public class TwitterPoster {
 		} catch (TwitterException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return false;
 		}
 		return true;
 	}

@@ -83,12 +83,17 @@ public class FileDaoImp implements FileDao{
 
 	@Override
 	public int getImageIDFromURL(String storedPhotoURL) {
+		
+		if(storedPhotoURL != null && !storedPhotoURL.equalsIgnoreCase("")) {
 		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 		def.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		TransactionStatus status = transactionManager.getTransaction(def);
 		String strSQL = "SELECT id FROM uploadedfile WHERE url = ?";
+		System.out.println(storedPhotoURL);
 		SqlRowSet rs = jdbcTemplate.queryForRowSet(strSQL, new Object[] {storedPhotoURL});
 		rs.next();
 		return rs.getInt("id");
+		} 
+		return 0;
 	}
 }

@@ -80,9 +80,21 @@ public class AppController {
 	Principal principal;
 
 	@GetMapping(value = "/")
-	public String postHomeFromRoot(Principal principal) {
+	public String postHomeFromRoot(Principal principal, Model model) {
 		getUserIdOnStart(principal);
-		System.out.println("got to postHome()");
+		if(ownerName != null) {
+			model.addAttribute("welcomeMessage", "Welcome " + ownerName);
+		
+		if(twitterPoster != null) {
+			model.addAttribute("twitterMessage", "logged in with Twitter");
+		} 
+		if(facebookPoster != null) {
+			model.addAttribute("facebookMessage", "logged in with Facebook");
+		}
+		if(instagramPoster != null) {
+			model.addAttribute("instagramMessage", "logged in with Instagram");
+		}
+		}
 		return "home";
 	}
 
@@ -92,13 +104,28 @@ public class AppController {
 			ownerName = principal.getName();
 			System.out.println(ownerName);
 			owner = userDao.getID(ownerName);
+		} else {
+			ownerName = null;
 		}
 	}
 	
 	@GetMapping(value = "/home")
-	public String postHome(Principal principal) {
+	public String postHome(Principal principal, Model model) {
 		//System.out.println("got to postHome()");
 		getUserIdOnStart(principal);
+		if(ownerName != null) {
+			model.addAttribute("welcomeMessage", "Welcome " + ownerName);
+		
+		if(twitterPoster != null) {
+			model.addAttribute("twitterMessage", "logged in with Twitter");
+		} 
+		if(facebookPoster != null) {
+			model.addAttribute("facebookMessage", "logged in with Facebook");
+		}
+		if(instagramPoster != null) {
+			model.addAttribute("instagramMessage", "logged in with Instagram");
+		}
+		}
 		return "home";
 	}
 	
@@ -116,6 +143,15 @@ public class AppController {
 				ArrayList<IDBodyPair> pairs = postDao.getPostIDs(owner);
 				model.addAttribute("posts", pairs);
 				return "posts";
+			}
+			if(post.isPostToTwitter()) {
+				model.addAttribute("twitterMessage", "Posted to Twitter");
+			} 
+			if(post.isPostToFacebook()) {
+				model.addAttribute("facebookMessage", "Posted to Facebook");
+			}
+			if(post.isPostToInstagram()) {
+				model.addAttribute("instagramMessage", "Posted to Instagram");
 			}
 			model.addAttribute("post", post);
 			return "savedPost";
@@ -271,7 +307,9 @@ public class AppController {
 	public String showTwitterLoginPage(TwitterPin twitterPin, Model model) throws IOException {
     	twitterPoster = new TwitterPoster(fileDao);
     	twitterPin = new TwitterPin();
-		//twitterPin.setURL(twitterPoster.getAuthenticationURL()); 
+    	String url = twitterPoster.getAuthenticationURL();
+    	System.out.println(url);
+		twitterPin.setURL(url); 
 		model.addAttribute("twitterPin", twitterPin);
 		return "twitterPin";
 	}
@@ -280,7 +318,7 @@ public class AppController {
 	public String getTwitterPinPage(@Valid @ModelAttribute("pin") TwitterPin twitterPin, BindingResult result, Model model) {
 		this.twitterPin = twitterPin;
 		System.out.println(twitterPin.getPin());
-    	//twitterPoster.getAccessTokenFromPIN(twitterPin.getPin());
+    	twitterPoster.getAccessTokenFromPIN(twitterPin.getPin());
 		return "home";
 	}
     
@@ -306,6 +344,18 @@ public class AppController {
     	return "confirmation";
     }
     
+    @GetMapping(value = "/TwitterToken")
+	public String getTwitterAccessToken(@RequestParam(name = "oauth_token", required=false, defaultValue="0") String token, @RequestParam(name = "oauth_verifier", required=false, defaultValue="0") String secret, Model model) {
+    	if(token.equals("0")) {
+    		return "home";
+    	} 
+    	
+    	twitterPoster.setAccessToken(token, secret);
+    	System.out.println(token);
+    	System.out.println(secret);
+    	return "confirmation";
+    }
+    
     @GetMapping("/selectFile")
     public String selectUploadedFiles(Model model) throws IOException {
     	ArrayList<FilenameURLPair> listOfFiles = fileDao.getFileNamesAndURLs(owner);
@@ -313,8 +363,6 @@ public class AppController {
         return "selectFile";
        
     }
-    
-    
     
     
 }

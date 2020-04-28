@@ -18,10 +18,11 @@ import FBO.StoredSMPost;
 
 public class FacebookPoster {
 	
-	static private String appID;
+	
+	static private String appID = "2275238089397970";
 	static private String secretID;
 	private String accessToken;
-	private HttpPost HttpPost = new HttpPost("https://httpbin.org/post");
+	private HttpPost HttpPost = new HttpPost("https://graph.facebook.com/" + appID + "/photos");
 	private CloudinaryUploader uploader;
 	private static FileDao fileDao;
 	
